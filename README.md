@@ -180,8 +180,24 @@ If you encounter issues while running **ThyroScope**, check the solutions below 
 
 **Problem:** `GATK HaplotypeCaller` or `SnpEff` may crash if Docker is not allocated enough RAM.
 
-**Solution:** * Open **Docker Desktop Settings** > **Resources**.
-* Increase the **Memory** limit to at least **16GB** (8GB is the absolute minimum).
+**Solution 1: Docker Desktop Settings**
+* Open **Docker Desktop Settings** > **Resources**.
+* Increase the allocated **Memory** to at least **16GB** (8GB minimum).
+
+**Solution 2: WSL2 Configuration (Advanced)**
+If you are using Docker with the WSL2 backend, you can manually limit or allocate memory by editing the `.wslconfig` file:
+1. Press `Win + R`, type `%UserProfile%`, and press **Enter**.
+2. Create or edit a file named `.wslconfig` (ensure it has no `.txt` extension).
+3. Paste the following configuration:
+   ```ini
+   [wsl2]
+   memory=16GB    # Limits VM memory in WSL2
+   processors=8   # Optional: Limits number of CPU cores
+   ```
+4. Restart WSL by running `wsl --shutdown` in PowerShell, then restart Docker Desktop.
+
+> [!TIP]
+> **Recommended Allocation:** It is generally recommended to set the WSL2 memory to **50–75%** of your total system RAM to maintain overall system stability.
 
 ---
 ## 📜 Citation & Contact
