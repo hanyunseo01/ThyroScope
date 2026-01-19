@@ -88,3 +88,32 @@ docker run --rm \
   -v "${PWD}/ref:/data/ref" \
   -v "${PWD}/snpEff_db:/pipeline/snpEff/data" \
   hanyunseo01/thyroid_pipeline:v23
+
+---
+
+## 📄 Output Files
+
+After the analysis completes, check the `data/` folder for these key files:
+
+| File Name | Description |
+| :--- | :--- |
+| **`*_Clinical_Report.xlsx`** | **The Final Report.** A comprehensive Excel file containing filtered variants annotated with Variant ID (rsID), ClinVar, gnomAD AF, SIFT/PolyPhen, and Impact. |
+| **`*_MultiQC_Report.html`** | **Quality Control.** Interactive graphs showing read quality, mapping rates, and duplicate levels. Open with any web browser. |
+| **`*_coverage.mosdepth.summary.txt`** | **Depth Statistics.** Shows how well the target genes were covered (e.g., mean depth, % bases > 20x). |
+| `*.bam` / `*.vcf` | Intermediate alignment and variant calling files for further manual inspection (IGV). |
+
+### 🩺 Inside the Clinical Report (.xlsx)
+
+The **Clinical Report** is designed for immediate clinical interpretation. It aggregates data from **SnpEff**, **ClinVar**, **gnomAD**, and **dbSNP** into a single view.
+
+| Column Category | Columns Included | Description |
+| :--- | :--- | :--- |
+| **Target Info** | `Gene`, `Transcript ID` | The gene symbol (e.g., *BRAF*) and the specific transcript used for annotation. |
+| **Variant Identity** | `Variant ID (rsID)` | The dbSNP reference ID (e.g., *rs113488022*), crucial for cross-referencing with literature. |
+| **Genomic Location** | `Chromosome`, `Position`, `Ref`, `Alt` | Exact genomic coordinates (GRCh38) and the specific base change. |
+| **Mutation Detail** | `DNA Change`, `Protein Change` | HGVS notation describing the change at the DNA (c.) and Protein (p.) level. |
+| **Clinical Significance** | `ClinVar`, `gnomAD AF` | **ClinVar:** Clinical interpretation (e.g., *Pathogenic, Benign*).<br>**gnomAD AF:** Global Allele Frequency to identify rare variants vs. common polymorphisms. |
+| **Impact Prediction** | `Effect`, `Impact`, `Feature Type` | **Effect:** Type of mutation (e.g., *missense_variant*).<br>**Impact:** Predicted severity (*HIGH, MODERATE, LOW, MODIFIER*).<br>**Feature Type:** Affected feature (e.g., *transcript*). |
+| **In Silico Scores** | `SIFT`, `PolyPhen` | Computational predictions of how the variant affects protein function. |
+
+> **💡 Tip for Clinicians:** Start by filtering the **`Impact`** column for **HIGH** or **MODERATE**, and check the **`ClinVar`** column for known pathogenic variants.
