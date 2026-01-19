@@ -6,7 +6,7 @@
 
 **ThyroScope** is a streamlined, containerized bioinformatics pipeline designed to "scope out" and analyze thyroid-specific variants from **Whole Exome Sequencing (WES)** data.
 
-By leveraging a **"Lightweight Containerization Strategy"** and a **Virtual Panel approach**, ThyroScope allows clinicians to bypass complex command-line interfaces. It automates the entire workflow—from raw FASTQ to a clinical-grade Excel report—with a single click, focusing specifically on 25 high-priority genes associated with thyroid and parathyroid disorders.
+By leveraging a **"Lightweight Containerization Strategy"** and a **"Virtual Panel approach"**, ThyroScope allows clinicians to bypass complex command-line interfaces. It automates the entire workflow—from raw FASTQ to a clinical-grade Excel report—with a single click, focusing specifically on 25 high-priority genes associated with thyroid and parathyroid disorders.
 ![ThyroScope Pipeline Diagram](canvas-image-1-1768740173287.png)
 
 ---
@@ -24,6 +24,32 @@ By leveraging a **"Lightweight Containerization Strategy"** and a **Virtual Pane
     * **gnomAD:** Includes Global Allele Frequency (AF) to help differentiate rare variants from common polymorphisms.
     * **Functional Prediction:** SIFT and PolyPhen-2 scores included.
 * **⚡ One-Click Automation:** Includes a Windows Batch script (`.bat`) for "Drag-and-Drop" style execution.
+
+---
+
+## 🔬 Pipeline Workflow (Methods)
+ThyroScope automates the following bioinformatics steps in a sequential manner:
+
+1.  **QC & Trimming** ✂️
+    * **Tools:** `FastQC`, `Trimmomatic`
+    * **Details:** Adapter removal, Quality trimming (`SlidingWindow:4:15`).
+2.  **Alignment** 🧬
+    * **Tool:** `BWA-MEM`
+    * **Reference:** Aligned to the **GRCh38 (hg38)** reference genome.
+3.  **Post-Processing** 🧹
+    * **Tools:** `Samtools` (Sort/Index), `GATK MarkDuplicates`.
+    * **Details:** Sorting BAM files and marking PCR duplicates to ensure accurate variant calling.
+4.  **Coverage Analysis** 📉
+    * **Tool:** `Mosdepth`
+    * **Details:** Rapid depth-of-coverage check specifically for the targeted regions.
+5.  **Variant Calling** 🔍
+    * **Tool:** `GATK HaplotypeCaller`
+    * **Details:** Calling germline variants with `--interval-padding 100` to capture essential splice site regions.
+6.  **Annotation** 📝
+    * **Tools:** `SnpEff` (HGVS notation), `MyVariant.info` API.
+    * **Databases:** ClinVar, gnomAD (Global AF), dbSNP (rsID), dbNSFP (SIFT/PolyPhen).
+7.  **Reporting** 📊
+    * **Output:** A custom Python script aggregates all data into a **Hybrid Clinical Excel Report** and generates a **MultiQC** HTML summary.
 
 ---
 
@@ -120,32 +146,50 @@ The **Clinical Report** is designed for immediate clinical interpretation. It ag
 
 ---
 
-## 🔬 Pipeline Workflow (Methods)
-ThyroScope automates the following bioinformatics steps in a sequential manner:
+## 🛠️ Troubleshooting
 
-1.  **QC & Trimming** ✂️
-    * **Tools:** `FastQC`, `Trimmomatic`
-    * **Details:** Adapter removal, Quality trimming (`SlidingWindow:4:15`).
-2.  **Alignment** 🧬
-    * **Tool:** `BWA-MEM`
-    * **Reference:** Aligned to the **GRCh38 (hg38)** reference genome.
-3.  **Post-Processing** 🧹
-    * **Tools:** `Samtools` (Sort/Index), `GATK MarkDuplicates`.
-    * **Details:** Sorting BAM files and marking PCR duplicates to ensure accurate variant calling.
-4.  **Coverage Analysis** 📉
-    * **Tool:** `Mosdepth`
-    * **Details:** Rapid depth-of-coverage check specifically for the targeted regions.
-5.  **Variant Calling** 🔍
-    * **Tool:** `GATK HaplotypeCaller`
-    * **Details:** Calling germline variants with `--interval-padding 100` to capture essential splice site regions.
-6.  **Annotation** 📝
-    * **Tools:** `SnpEff` (HGVS notation), `MyVariant.info` API.
-    * **Databases:** ClinVar, gnomAD (Global AF), dbSNP (rsID), dbNSFP (SIFT/PolyPhen).
-7.  **Reporting** 📊
-    * **Output:** A custom Python script aggregates all data into a **Hybrid Clinical Excel Report** and generates a **MultiQC** HTML summary.
+If you encounter issues while running **ThyroScope**, check the solutions below for common problems.
 
 ---
 
+### 1. `is not a valid Windows path` Error ⚠️
+
+**Problem:** This usually happens when running the `docker run` command in **PowerShell** using CMD-style syntax (`%cd%`).
+
+**Solution:** * **If using PowerShell:** Use `${PWD}` instead of `%cd%`.
+  * *Example:* `-v "${PWD}\data:/data"`
+* **If using Command Prompt (CMD):** Keep using `%cd%`.
+
+---
+
+### 2. `SnpEff database not found!` Error 📂
+
+**Problem:** The pipeline cannot find the `hg38` database files inside the container.
+
+**Solution:** * **Check Folder Name:** Verify if your folder name is `snpEff_db` (all lowercase) or `SnpEff_db`.
+* **Match Docker Mount:** The Docker mount command `-v .../snpEff_db:/pipeline/snpEff/data` must match your actual host folder name **exactly** (case-sensitive).
+* **Verify Structure:** Ensure the `hg38` folder is located directly inside the `snpEff_db` folder on your host machine.
+
+---
+
+### 3. `No input FASTQ files found` Error 🔍
+
+**Problem:** The pipeline script cannot detect your raw sequencing data.
+
+**Solution:** * **Check Naming Convention:** Ensure your files are named with the suffix `_1.fq.gz` and `_2.fq.gz`.
+  * *Example:* `Patient01_1.fq.gz`, `Patient01_2.fq.gz`
+* **Check Mounting:** Verify if the data folder is correctly mounted to the `/data` path in the Docker container.
+
+---
+
+### 4. Memory/RAM Crash (GATK Errors) 💻
+
+**Problem:** `GATK HaplotypeCaller` or `SnpEff` may crash if Docker is not allocated enough RAM.
+
+**Solution:** * Open **Docker Desktop Settings** > **Resources**.
+* Increase the **Memory** limit to at least **16GB** (8GB is the absolute minimum).
+
+---
 ## 📜 Citation & Contact
 
 If you use **ThyroScope** in your research, please cite the following paper:
